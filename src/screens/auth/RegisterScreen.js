@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import FadeInUp from '../../components/FadeInUp';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
+import { haptic } from '../../utils/haptics';
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
@@ -16,29 +18,36 @@ export default function RegisterScreen({ navigation }) {
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const usernameRef = useRef(null);
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
 
   const set = (key) => (val) => setForm((p) => ({ ...p, [key]: val }));
 
+  const fail = (message) => { haptic.warning(); setError(message); };
+
   const submit = async () => {
-    if (!form.name || !form.username || !form.email || !form.password) {
-      setError('Please fill in every field.');
+    if (!form.name.trim() || !form.username || !form.email.trim() || !form.password) {
+      fail('Please fill in every field.');
       return;
     }
     if (!USERNAME_RE.test(form.username)) {
-      setError('Username must be 3-20 chars: lowercase letters, numbers, underscores.');
+      fail('Username must be 3-20 chars: lowercase letters, numbers, underscores.');
       return;
     }
     if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      fail('Password must be at least 6 characters.');
       return;
     }
     setError('');
     setLoading(true);
     try {
-      await register(form);
+      await register({ ...form, name: form.name.trim(), email: form.email.trim() });
+      haptic.success();
       toast('Welcome to GathaLok!');
       navigation.getParent()?.goBack();
     } catch (err) {
+      haptic.error();
       setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
@@ -47,41 +56,101 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <Screen scroll keyboard safeTop tabInset={false} padded>
-      <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 24 }}>
-        <Text style={[theme.typography.display, { color: theme.colors.accent }]}>॥ GathaLok ॥</Text>
-        <Text style={[theme.typography.h2, { marginTop: 18 }]}>Begin Your Journey</Text>
-        <Text style={[theme.typography.bodyMuted, { marginTop: 4, textAlign: 'center' }]}>
-          Join thousands discovering the world's mythological heritage
+      <FadeInUp distance={12}>
+        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 24 }}>
+          <Text style={[theme.typography.display, { color: theme.colors.accent }]}>॥ GathaLok ॥</Text>
+          <Text style={[theme.typography.h2, { marginTop: 18 }]}>Begin Your Journey</Text>
+          <Text style={[theme.typography.bodyMuted, { marginTop: 4, textAlign: 'center' }]}>
+            Join thousands discovering the world's mythological heritage
+          </Text>
+        </View>
+      </FadeInUp>
+
+      <FadeInUp delay={90} distance={16}>
+        <Input
+          label="Full Name"
+          value={form.name}
+          onChangeText={set('name')}
+          placeholder="Arjun Sharma"
+          autoComplete="name"
+          textContentType="name"
+          leftIcon="person-outline"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => usernameRef.current?.focus()}
+        />
+        <Input
+          ref={usernameRef}
+          label="Username"
+          value={form.username}
+          onChangeText={(v) => set('username')(v.toLowerCase())}
+          placeholder="arjunsharma"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="username-new"
+          textContentType="username"
+          leftIcon="at-outline"
+          helperText="3-20 chars: lowercase letters, numbers, underscores"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => emailRef.current?.focus()}
+        />
+        <Input
+          ref={emailRef}
+          label="Email"
+          value={form.email}
+          onChangeText={set('email')}
+          placeholder="you@example.com"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          autoComplete="email"
+          textContentType="emailAddress"
+          leftIcon="mail-outline"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordRef.current?.focus()}
+        />
+        <Input
+          ref={passwordRef}
+          label="Password"
+          value={form.password}
+          onChangeText={set('password')}
+          placeholder="Min 6 characters"
+          secureToggle
+          secureTextEntry
+          autoComplete="password-new"
+          textContentType="newPassword"
+          leftIcon="lock-closed-outline"
+          returnKeyType="go"
+          onSubmitEditing={submit}
+        />
+
+        {error ? (
+          <Text accessibilityLiveRegion="polite" style={{ color: theme.colors.danger, marginBottom: 10 }}>⚠ {error}</Text>
+        ) : null}
+
+        <Button title={loading ? 'Please wait…' : 'Create Account'} onPress={submit} loading={loading} style={{ marginTop: 6 }} />
+
+        <Text style={[theme.typography.caption, { textAlign: 'center', marginTop: 16 }]}>
+          By joining, you agree to our Terms of Service and Privacy Policy.
         </Text>
-      </View>
+      </FadeInUp>
 
-      <Input label="Full Name" value={form.name} onChangeText={set('name')} placeholder="Arjun Sharma" leftIcon="person-outline" />
-      <Input
-        label="Username"
-        value={form.username}
-        onChangeText={(v) => set('username')(v.toLowerCase())}
-        placeholder="arjunsharma"
-        autoCapitalize="none"
-        leftIcon="at-outline"
-        helperText="3-20 chars: lowercase letters, numbers, underscores"
-      />
-      <Input label="Email" value={form.email} onChangeText={set('email')} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" leftIcon="mail-outline" />
-      <Input label="Password" value={form.password} onChangeText={set('password')} placeholder="Min 6 characters" secureToggle secureTextEntry leftIcon="lock-closed-outline" />
-
-      {error ? <Text style={{ color: theme.colors.danger, marginBottom: 10 }}>⚠ {error}</Text> : null}
-
-      <Button title={loading ? 'Please wait…' : 'Create Account'} onPress={submit} loading={loading} style={{ marginTop: 6 }} />
-
-      <Text style={[theme.typography.caption, { textAlign: 'center', marginTop: 16 }]}>
-        By joining, you agree to our Terms of Service and Privacy Policy.
-      </Text>
-
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-        <Text style={theme.typography.bodyMuted}>Already a member? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={[theme.typography.body, { color: theme.colors.accent, fontWeight: '700' }]}>Sign in</Text>
-        </TouchableOpacity>
-      </View>
+      <FadeInUp delay={180} distance={16}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+          <Text style={theme.typography.bodyMuted}>Already a member? </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login')}
+            hitSlop={theme.hitSlop}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in to an existing account"
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={[theme.typography.body, { color: theme.colors.accent, fontWeight: '700' }]}>Sign in</Text>
+          </TouchableOpacity>
+        </View>
+      </FadeInUp>
     </Screen>
   );
 }

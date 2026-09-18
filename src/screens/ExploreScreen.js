@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../components/Screen';
 import Input from '../components/Input';
 import Chip from '../components/Chip';
 import StoryCard from '../components/StoryCard';
 import ErrorState from '../components/ErrorState';
+import EmptyState from '../components/EmptyState';
 import { SkeletonGrid } from '../components/Skeleton';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/client';
@@ -31,6 +32,8 @@ export default function ExploreScreen({ navigation, route }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
   const debounceRef = useRef(null);
 
   // Picking a category/country/tag from another screen passes route params on
@@ -44,8 +47,10 @@ export default function ExploreScreen({ navigation, route }) {
     if (route.params?.tag !== undefined) setTag(route.params.tag);
   }, [route.params]);
 
-  const fetchStories = useCallback(async (pageNum = 1, append = false) => {
-    if (append) setLoadingMore(true); else setLoading(true);
+  // silent: refetch page 1 without dropping back to the skeleton (pull-to-refresh).
+  const fetchStories = useCallback(async (pageNum = 1, append = false, silent = false) => {
+    if (append) setLoadingMore(true); else if (!silent) setLoading(true);
+    if (!append) setError(false);
     try {
       const params = { page: pageNum, limit: 12, sort };
       if (search) params.search = search;
@@ -58,7 +63,8 @@ export default function ExploreScreen({ navigation, route }) {
       setTotal(res.data.pagination?.total || 0);
       setPage(pageNum);
     } catch (err) {
-      if (!append) setStories([]);
+      // A failed request must not look like "no results" — track it separately.
+      if (!append) { setStories([]); setError(true); }
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -75,6 +81,12 @@ export default function ExploreScreen({ navigation, route }) {
   const loadMore = () => {
     if (loadingMore || page >= pages) return;
     fetchStories(page + 1, true);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchStories(1, false, true);
+    setRefreshing(false);
   };
 
   const hasFilters = !!search || !!category || !!country || !!tag || sort !== '-createdAt';
@@ -128,12 +140,16 @@ export default function ExploreScreen({ navigation, route }) {
       {!loading && stories.length === 0 ? (
         <View style={{ flex: 1 }}>
           {Header}
-          <ErrorState
-            icon="moon-outline"
-            title="No stories found"
-            message="Try adjusting your filters or search for something else."
-            onRetry={hasFilters ? clearFilters : undefined}
-          />
+          {error ? (
+            <ErrorState onRetry={() => fetchStories(1, false)} />
+          ) : (
+            <EmptyState
+              icon="moon-outline"
+              title="No stories found"
+              subtitle={hasFilters ? 'Try adjusting your filters or search for something else.' : 'The archive is quiet for now. Check back soon.'}
+              action={hasFilters ? { label: 'Clear filters', onPress: clearFilters } : undefined}
+            />
+          )}
         </View>
       ) : (
         <FlatList
@@ -143,6 +159,7 @@ export default function ExploreScreen({ navigation, route }) {
             <StoryCard story={item} onPress={() => navigation.navigate('StoryDetail', { slug: item.slug })} />
           )}
           ListHeaderComponent={Header}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.accent} colors={[theme.colors.accent]} />}
           onEndReachedThreshold={0.4}
           onEndReached={loadMore}
           contentContainerStyle={{ paddingBottom: theme.layout.tabBarInset }}

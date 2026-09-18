@@ -7,9 +7,11 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import PillBadge from '../components/PillBadge';
+import { DetailSkeleton } from '../components/Skeleton';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { haptic } from '../utils/haptics';
 import api from '../api/client';
 import { CATEGORIES } from '../data/categories';
 import { COUNTRIES } from '../data/countries';
@@ -56,6 +58,7 @@ export default function ContributeScreen({ navigation, route }) {
   const storyId = route.params?.id || null;
 
   const [step, setStep] = useState(0);
+  const goToStep = (s) => { haptic.select(); setStep(s); };
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -94,6 +97,7 @@ export default function ContributeScreen({ navigation, route }) {
       const { data } = await api.post('/upload/story-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setForm((p) => ({ ...p, coverImage: data.data }));
     } catch (err) {
+      haptic.error();
       toast('Image upload failed.', 'error');
     } finally {
       setUploadingImage(false);
@@ -131,8 +135,10 @@ export default function ContributeScreen({ navigation, route }) {
         await api.post('/stories', payload);
         toast(status === 'draft' ? 'Saved as draft.' : 'Submitted for review!');
       }
+      haptic.success();
       navigation.navigate('Contributions');
     } catch (err) {
+      haptic.error();
       toast(err.message || 'Failed to submit.', 'error');
     } finally {
       setLoading(false);
@@ -141,9 +147,9 @@ export default function ContributeScreen({ navigation, route }) {
 
   if (loadingStory) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={theme.colors.accent} />
-      </View>
+      <Screen title="Edit Story" scroll>
+        <DetailSkeleton />
+      </Screen>
     );
   }
 
@@ -263,9 +269,9 @@ export default function ContributeScreen({ navigation, route }) {
       )}
 
       <View style={{ flexDirection: 'row', marginBottom: 24 }}>
-        {step > 0 ? <Button title="← Back" variant="ghost" onPress={() => setStep((s) => s - 1)} style={{ flex: 1, marginRight: 8 }} /> : null}
+        {step > 0 ? <Button title="← Back" variant="ghost" onPress={() => goToStep(step - 1)} style={{ flex: 1, marginRight: 8 }} /> : null}
         {step < STEPS.length - 1 ? (
-          <Button title="Continue →" onPress={() => setStep((s) => s + 1)} disabled={!canProceed()} style={{ flex: 1 }} />
+          <Button title="Continue →" onPress={() => goToStep(step + 1)} disabled={!canProceed()} style={{ flex: 1 }} />
         ) : null}
       </View>
     </Screen>

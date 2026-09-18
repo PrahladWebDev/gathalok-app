@@ -1,34 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Screen from '../components/Screen';
 import StoryCard from '../components/StoryCard';
+import EmptyState from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
+import useFocusedFetch from '../hooks/useFocusedFetch';
 import api from '../api/client';
 
 export default function HistoryScreen({ navigation }) {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  const load = () => {
-    setLoading(true);
-    setError(false);
-    api.get('/users/reading-history')
-      .then((r) => setHistory(r.data.data || []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, []);
+  const { data: history, status, refreshing, refresh, reload } = useFocusedFetch(
+    () => api.get('/users/reading-history').then((r) => r.data.data || []),
+    []
+  );
 
   return (
-    <Screen title="Reading History" scroll>
-      {loading ? (
+    <Screen title="Reading History" scroll refreshing={refreshing} onRefresh={refresh}>
+      {status === 'loading' ? (
         <SkeletonList count={5} />
-      ) : error ? (
-        <ErrorState onRetry={load} />
+      ) : status === 'error' ? (
+        <ErrorState onRetry={reload} />
       ) : history.length === 0 ? (
-        <ErrorState icon="time-outline" title="No reading history yet" message="Stories you open will show up here." />
+        <EmptyState
+          icon="time-outline"
+          title="No reading history yet"
+          subtitle="Stories you open will show up here."
+          action={{ label: 'Explore stories', onPress: () => navigation.navigate('ExploreTab') }}
+        />
       ) : (
         history.map((h, i) => (
           <StoryCard

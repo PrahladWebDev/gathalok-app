@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import StoryCard from '../components/StoryCard';
 import { SkeletonList } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
+import FadeInUp from '../components/FadeInUp';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -25,7 +26,13 @@ function SectionHeader({ label, title, onPress, actionLabel = 'View all' }) {
         <Text style={theme.typography.h2}>{title}</Text>
       </View>
       {onPress ? (
-        <TouchableOpacity onPress={onPress}>
+        <TouchableOpacity
+          onPress={onPress}
+          hitSlop={theme.hitSlop}
+          accessibilityRole="button"
+          accessibilityLabel={`${actionLabel}: ${title}`}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
           <Text style={[theme.typography.body, { color: theme.colors.accent, fontWeight: '700' }]}>{actionLabel} →</Text>
         </TouchableOpacity>
       ) : null}
@@ -92,7 +99,8 @@ export default function HomeScreen({ navigation }) {
     <Screen title="GathaLok" subtitle="Living archive of world folklore" scroll refreshing={refreshing} onRefresh={onRefresh}>
       {/* Hero — rotating featured story */}
       {heroStory ? (
-        <Card onPress={() => navigation.navigate('StoryDetail', { slug: heroStory.slug })} style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
+        <FadeInUp distance={14}>
+        <Card onPress={() => navigation.navigate('StoryDetail', { slug: heroStory.slug })} accessibilityLabel={`Featured story: ${heroStory.title}`} style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
           <Image
             source={{ uri: heroStory.coverImage?.url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(heroStory.title) + '&size=600&background=1E1736&color=B78C3E' }}
             style={{ width: '100%', height: 200 }}
@@ -114,6 +122,7 @@ export default function HomeScreen({ navigation }) {
             </View>
           ) : null}
         </Card>
+        </FadeInUp>
       ) : null}
 
       {/* Recently added — moved up per feedback: fresh content first */}

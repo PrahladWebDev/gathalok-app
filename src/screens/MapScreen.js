@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, FlatList } from 'react-native';
 import Screen from '../components/Screen';
 import Card from '../components/Card';
@@ -6,6 +6,7 @@ import PillBadge from '../components/PillBadge';
 import { SkeletonGrid } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import { useTheme } from '../context/ThemeContext';
+import useFocusedFetch from '../hooks/useFocusedFetch';
 import api from '../api/client';
 import { COUNTRIES } from '../data/countries';
 
@@ -15,33 +16,23 @@ import { COUNTRIES } from '../data/countries';
 // with no dev build, no Google Maps API key, and no native config.
 export default function MapScreen({ navigation }) {
   const theme = useTheme();
-  const [counts, setCounts] = useState({}); // { "India": 12, ... }
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { data: counts, status, refreshing, refresh, reload } = useFocusedFetch(
+    () => api.get('/countries/stats').then((r) => {
+      const map = {}; // { "India": 12, ... }
+      (r.data.data || []).forEach((row) => { map[row._id] = row.storyCount; });
+      return map;
+    }),
+    []
+  );
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(false);
-    api.get('/countries/stats')
-      .then((r) => {
-        const map = {};
-        (r.data.data || []).forEach((row) => { map[row._id] = row.storyCount; });
-        setCounts(map);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const sorted = [...COUNTRIES].sort((a, b) => (counts[b.name] || 0) - (counts[a.name] || 0));
+  const sorted = [...COUNTRIES].sort((a, b) => ((counts || {})[b.name] || 0) - ((counts || {})[a.name] || 0));
 
   return (
-    <Screen title="Realms" subtitle="Every region GathaLok has reached" scroll>
-      {loading ? (
+    <Screen title="Realms" subtitle="Every region GathaLok has reached" scroll refreshing={refreshing} onRefresh={refresh}>
+      {status === 'loading' ? (
         <SkeletonGrid count={10} />
-      ) : error ? (
-        <ErrorState onRetry={load} />
+      ) : status === 'error' ? (
+        <ErrorState onRetry={reload} />
       ) : (
         <FlatList
           data={sorted}
@@ -54,6 +45,7 @@ export default function MapScreen({ navigation }) {
             return (
               <Card
                 onPress={() => navigation.navigate('CountryDetail', { countryName: item.name })}
+                accessibilityLabel={`${item.name}, ${count} ${count === 1 ? 'tale' : 'tales'}`}
                 style={{ width: '48%', alignItems: 'center', paddingVertical: 20, marginBottom: 12, opacity: count ? 1 : 0.55 }}
               >
                 <Text style={{ fontSize: 32 }}>{item.emoji}</Text>

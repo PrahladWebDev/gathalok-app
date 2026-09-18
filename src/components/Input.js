@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
 // Text input with label, inline error/helper text, optional leading icon and
 // a trailing slot (used for the password eye). `secureToggle` adds the eye
-// automatically for password fields.
-export default function Input({
+// automatically for password fields. Forwards its ref to the TextInput so
+// forms can chain fields with returnKeyType="next" + onSubmitEditing.
+const Input = forwardRef(function Input({
   label,
   error,
   helperText,
@@ -19,7 +20,7 @@ export default function Input({
   inputStyle,
   multiline,
   ...props
-}) {
+}, ref) {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const [hidden, setHidden] = useState(!!secureTextEntry);
@@ -31,6 +32,7 @@ export default function Input({
       <View style={[styles.field, multiline && styles.multiline, error && styles.fieldError, style]}>
         {leftIcon ? <Ionicons name={leftIcon} size={18} color={theme.colors.textMuted} style={{ marginRight: 8 }} /> : null}
         <TextInput
+          ref={ref}
           placeholderTextColor={theme.colors.textFaint}
           secureTextEntry={secure}
           multiline={multiline}
@@ -56,7 +58,9 @@ export default function Input({
       ) : null}
     </View>
   );
-}
+});
+
+export default Input;
 
 const makeStyles = (theme) => {
   const elevated = theme.uiStyle === 'elevated';
