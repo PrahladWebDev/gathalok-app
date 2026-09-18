@@ -1,0 +1,59 @@
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import Screen from '../../components/Screen';
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
+
+export default function LoginScreen({ navigation }) {
+  const theme = useTheme();
+  const toast = useToast();
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!email || !password) { setError('Enter your email and password.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await login(email.trim(), password);
+      toast('Welcome back, seeker of tales!');
+      navigation.getParent()?.goBack();
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Screen scroll keyboard safeTop tabInset={false} padded>
+      <View style={{ alignItems: 'center', marginTop: 40, marginBottom: 24 }}>
+        <Text style={[theme.typography.display, { color: theme.colors.accent }]}>॥ GathaLok ॥</Text>
+        <Text style={[theme.typography.h2, { marginTop: 18 }]}>Welcome Back</Text>
+        <Text style={[theme.typography.bodyMuted, { marginTop: 4, textAlign: 'center' }]}>
+          Sign in to continue exploring world folklore
+        </Text>
+      </View>
+
+      <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" leftIcon="mail-outline" />
+      <Input label="Password" value={password} onChangeText={setPassword} placeholder="••••••••" secureToggle secureTextEntry leftIcon="lock-closed-outline" />
+
+      {error ? <Text style={{ color: theme.colors.danger, marginBottom: 10 }}>⚠ {error}</Text> : null}
+
+      <Button title={loading ? 'Please wait…' : 'Sign In'} onPress={submit} loading={loading} style={{ marginTop: 6 }} />
+
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+        <Text style={theme.typography.bodyMuted}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={[theme.typography.body, { color: theme.colors.accent, fontWeight: '700' }]}>Join free</Text>
+        </TouchableOpacity>
+      </View>
+    </Screen>
+  );
+}
