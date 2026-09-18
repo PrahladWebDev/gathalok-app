@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#0B1E2D"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "scheme": "gathalok",
     "ios": {
       "supportsTablet": true,
@@ -24,7 +26,10 @@
         "monochromeImage": "./assets/adaptive-icon-mono.png",
         "backgroundColor": "#0B1E2D"
       },
-      "package": "com.gathalok.app"
+      "package": "com.gathalok.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,6 +55,12 @@
           "photosPermission": "Allow GathaLok to access your photos to set an avatar or add a story cover image."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "482bf7f6-e024-4ded-932f-e3e4c8094273"
+      }
+    },
+    "owner": "prahladsingh7512s-team"
   }
 }

@@ -103,6 +103,10 @@ function MainTabs() {
           borderTopWidth: elevated ? 1 : theme.border.width,
           borderTopColor: elevated ? theme.colors.border : theme.colors.text,
           paddingHorizontal: 4,
+          // Floating bar: cancel the automatic safe-area bottom padding so
+          // icons + labels stay vertically centered.
+          paddingTop: 0,
+          paddingBottom: 0,
           ...theme.shadow.card,
         },
         tabBarItemStyle: {
