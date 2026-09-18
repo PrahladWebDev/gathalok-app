@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 
 // Optional `action={{ label, onPress }}` renders a call-to-action button so an
 // empty list tells the person what to do next instead of just that it's empty.
-export default function EmptyState({ icon = 'shirt-outline', title, subtitle, action, compact = false, style }) {
+export default function EmptyState({ icon = 'book-outline', title, subtitle, action, compact = false, style }) {
   const theme = useTheme();
   const styles = makeStyles(theme);
   return (

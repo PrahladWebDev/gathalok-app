@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Screen from '../components/Screen';
 import Card from '../components/Card';
 import Chip from '../components/Chip';
+import EmptyState from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import { useTheme } from '../context/ThemeContext';
+import useFocusedFetch from '../hooks/useFocusedFetch';
+import { haptic } from '../utils/haptics';
 import api from '../api/client';
 
 const TYPE_ICONS = {
@@ -15,29 +18,24 @@ const TYPE_ICONS = {
 
 export default function NotificationsScreen({ navigation }) {
   const theme = useTheme();
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState('all'); // all | unread
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  const load = useCallback((f) => {
-    setLoading(true);
-    setError(false);
-    const params = f === 'unread' ? { unreadOnly: true } : {};
-    api.get('/notifications', { params })
-      .then((r) => { setNotifs(r.data.data || []); setUnreadCount(r.data.unreadCount || 0); })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => { load(filter); }, [filter, load]);
+  const { data, status, refreshing, refresh, reload, setData } = useFocusedFetch(
+    () => api.get('/notifications', { params: filter === 'unread' ? { unreadOnly: true } : {} })
+      .then((r) => ({ notifs: r.data.data || [], unreadCount: r.data.unreadCount || 0 })),
+    [filter]
+  );
+  const notifs = data?.notifs || [];
+  const unreadCount = data?.unreadCount || 0;
 
   const markRead = async (ids) => {
-    setNotifs((prev) => prev.map((n) => (ids === 'all' || ids.includes(n._id) ? { ...n, isRead: true } : n)));
-    setUnreadCount((prev) => (ids === 'all' ? 0 : Math.max(0, prev - ids.length)));
+    setData((prev) => prev && {
+      notifs: prev.notifs.map((n) => (ids === 'all' || ids.includes(n._id) ? { ...n, isRead: true } : n)),
+      unreadCount: ids === 'all' ? 0 : Math.max(0, prev.unreadCount - ids.length),
+    });
     try { await api.patch('/notifications/read', { ids }); } catch (err) {}
   };
+
+  const markAllRead = () => { haptic.success(); markRead('all'); };
 
   const openNotif = async (n) => {
     if (!n.isRead) markRead([n._id]);
@@ -51,8 +49,16 @@ export default function NotificationsScreen({ navigation }) {
       title="Notifications"
       subtitle={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : undefined}
       scroll
+      refreshing={refreshing}
+      onRefresh={refresh}
       right={unreadCount > 0 ? (
-        <TouchableOpacity onPress={() => markRead('all')}>
+        <TouchableOpacity
+          onPress={markAllRead}
+          hitSlop={theme.hitSlop}
+          accessibilityRole="button"
+          accessibilityLabel="Mark all notifications as read"
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
+        >
           <Text style={{ color: theme.colors.accent, fontWeight: '700' }}>✓ Mark all read</Text>
         </TouchableOpacity>
       ) : null}
@@ -62,22 +68,23 @@ export default function NotificationsScreen({ navigation }) {
         <Chip label={`Unread${unreadCount ? ` (${unreadCount})` : ''}`} active={filter === 'unread'} onPress={() => setFilter('unread')} />
       </View>
 
-      {loading ? (
+      {status === 'loading' ? (
         <SkeletonList count={6} />
-      ) : error ? (
-        <ErrorState onRetry={() => load(filter)} />
+      ) : status === 'error' ? (
+        <ErrorState onRetry={reload} />
       ) : notifs.length === 0 ? (
-        <ErrorState
-          icon="notifications-outline"
+        <EmptyState
+          icon={filter === 'unread' ? 'checkmark-done-outline' : 'notifications-outline'}
           title={filter === 'unread' ? "You're all caught up" : 'No notifications yet'}
-          message={filter === 'unread' ? undefined : "You'll be notified when your stories get approved, receive comments, or you earn achievements."}
-          onRetry={filter === 'unread' ? () => setFilter('all') : undefined}
+          subtitle={filter === 'unread' ? undefined : "You'll be notified when your stories get approved, receive comments, or you earn achievements."}
+          action={filter === 'unread' ? { label: 'Show all', onPress: () => setFilter('all') } : undefined}
         />
       ) : (
         notifs.map((n) => (
           <Card
             key={n._id}
             onPress={() => openNotif(n)}
+            accessibilityLabel={`${n.isRead ? '' : 'Unread. '}${n.title}`}
             style={{
               flexDirection: 'row', marginBottom: 10,
               backgroundColor: n.isRead ? theme.colors.surface : theme.colors.accentSoft,

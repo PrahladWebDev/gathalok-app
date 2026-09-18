@@ -8,11 +8,19 @@ import Button from '../components/Button';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { haptic } from '../utils/haptics';
 
 function Row({ icon, label, onPress, danger }) {
   const theme = useTheme();
   return (
-    <TouchableOpacity onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14 }}>
+    <TouchableOpacity
+      onPress={() => { haptic.select(); onPress && onPress(); }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={theme.hitSlop}
+      activeOpacity={0.7}
+      style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingVertical: 12 }}
+    >
       <Ionicons name={icon} size={20} color={danger ? theme.colors.danger : theme.colors.accent} style={{ width: 28 }} />
       <Text style={[theme.typography.body, danger && { color: theme.colors.danger }, { flex: 1 }]}>{label}</Text>
       <Ionicons name="chevron-forward" size={18} color={theme.colors.textFaint} />
@@ -43,8 +51,10 @@ export default function ProfileScreen({ navigation }) {
   const handleBecomeContributor = async () => {
     try {
       await becomeContributor();
+      haptic.success();
       toast('You are now a Contributor!');
     } catch (err) {
+      haptic.error();
       toast(err.message || 'Failed to upgrade.', 'error');
     }
   };

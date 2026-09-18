@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Share, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Share, Linking, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import Stars from '../components/Stars';
 import StoryCard from '../components/StoryCard';
 import { DetailSkeleton } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
+import ActionSheet from '../components/ActionSheet';
 import IconButton from '../components/IconButton';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -19,35 +20,15 @@ import api from '../api/client';
 import { getCategory } from '../data/categories';
 import { haptic } from '../utils/haptics';
 
-function ReportModal({ visible, targetType, onCancel, onSubmit, loading }) {
-  const theme = useTheme();
-  const [reason, setReason] = useState('');
-  if (!visible) return null;
-  const REASONS = ['spam', 'inaccurate', 'offensive', 'copyright', 'other'];
-  return (
-    <View style={{
-      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-      alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100,
-    }}>
-      <Card style={{ width: '100%' }}>
-        <Text style={theme.typography.h3}>Report {targetType === 'story' ? 'Story' : 'Comment'}</Text>
-        <Text style={[theme.typography.bodyMuted, { marginTop: 4, marginBottom: 14 }]}>
-          Help us keep GathaLok accurate and respectful.
-        </Text>
-        {REASONS.map((r) => (
-          <TouchableOpacity key={r} onPress={() => setReason(r)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}>
-            <Ionicons name={reason === r ? 'radio-button-on' : 'radio-button-off'} size={18} color={theme.colors.accent} style={{ marginRight: 10 }} />
-            <Text style={theme.typography.body}>{r.charAt(0).toUpperCase() + r.slice(1)}</Text>
-          </TouchableOpacity>
-        ))}
-        <View style={{ flexDirection: 'row', marginTop: 16 }}>
-          <Button title="Cancel" variant="ghost" onPress={onCancel} style={{ flex: 1, marginRight: 8 }} />
-          <Button title={loading ? 'Submitting…' : 'Submit'} onPress={() => onSubmit(reason)} disabled={!reason || loading} style={{ flex: 1 }} />
-        </View>
-      </Card>
-    </View>
-  );
-}
+// Report reasons, shown in a bottom ActionSheet (a real Modal, so it sits
+// above the scroll view and the tab bar on every platform).
+const REPORT_REASONS = [
+  { value: 'spam', label: 'Spam', icon: 'megaphone-outline' },
+  { value: 'inaccurate', label: 'Inaccurate', icon: 'alert-circle-outline' },
+  { value: 'offensive', label: 'Offensive', icon: 'hand-left-outline' },
+  { value: 'copyright', label: 'Copyright', icon: 'document-lock-outline' },
+  { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
+];
 
 function ReadingText({ text, style }) {
   const theme = useTheme();
@@ -94,15 +75,33 @@ function CommentItem({ comment, onLike, onDelete, onReport, currentUserId }) {
         </View>
         <Text style={[theme.typography.body, { marginTop: 2 }]}>{comment.content}</Text>
         <View style={{ flexDirection: 'row', marginTop: 6 }}>
-          <TouchableOpacity onPress={() => onLike(comment._id)} style={{ marginRight: 16 }}>
+          <TouchableOpacity
+            onPress={() => onLike(comment._id)}
+            hitSlop={theme.hitSlop}
+            accessibilityRole="button"
+            accessibilityLabel={`Like comment, ${comment.likeCount || 0} likes`}
+            style={{ marginRight: 16, minHeight: 32, justifyContent: 'center' }}
+          >
             <Text style={theme.typography.small}>♥ {comment.likeCount || 0}</Text>
           </TouchableOpacity>
           {mine ? (
-            <TouchableOpacity onPress={() => onDelete(comment._id)} style={{ marginRight: 16 }}>
+            <TouchableOpacity
+              onPress={() => onDelete(comment._id)}
+              hitSlop={theme.hitSlop}
+              accessibilityRole="button"
+              accessibilityLabel="Delete comment"
+              style={{ marginRight: 16, minHeight: 32, justifyContent: 'center' }}
+            >
               <Text style={[theme.typography.small, { color: theme.colors.danger }]}>Delete</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={() => onReport(comment._id, 'comment')}>
+            <TouchableOpacity
+              onPress={() => onReport(comment._id, 'comment')}
+              hitSlop={theme.hitSlop}
+              accessibilityRole="button"
+              accessibilityLabel="Report comment"
+              style={{ minHeight: 32, justifyContent: 'center' }}
+            >
               <Text style={theme.typography.small}>⚑ Report</Text>
             </TouchableOpacity>
           )}
@@ -219,11 +218,22 @@ export default function StoryDetailScreen({ route, navigation }) {
     } catch (err) {}
   };
 
-  const deleteComment = async (id) => {
-    try {
-      await api.delete(`/comments/${id}`);
-      setComments((prev) => prev.filter((c) => c._id !== id));
-    } catch (err) { toast('Failed to delete.', 'error'); }
+  const deleteComment = (id) => {
+    Alert.alert('Delete comment?', 'This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.delete(`/comments/${id}`);
+            setComments((prev) => prev.filter((c) => c._id !== id));
+            haptic.warning();
+            toast('Comment deleted.');
+          } catch (err) { toast('Failed to delete.', 'error'); }
+        },
+      },
+    ]);
   };
 
   const openReport = (id, type) => {
@@ -457,12 +467,12 @@ export default function StoryDetailScreen({ route, navigation }) {
           ) : null}
         </View>
       </ScrollView>
-      <ReportModal
+      <ActionSheet
         visible={!!reportTarget}
-        targetType={reportTarget?.type}
-        loading={reportLoading}
-        onCancel={() => setReportTarget(null)}
-        onSubmit={submitReport}
+        title={`Report ${reportTarget?.type === 'story' ? 'Story' : 'Comment'}`}
+        subtitle="Help us keep GathaLok accurate and respectful. Pick a reason to send the report."
+        onClose={() => setReportTarget(null)}
+        actions={REPORT_REASONS.map((r) => ({ label: r.label, icon: r.icon, onPress: () => submitReport(r.value) }))}
       />
     </View>
   );

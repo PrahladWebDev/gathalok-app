@@ -55,17 +55,27 @@ story list.
 
 ## App icon & splash screen
 
-Extracted from your reference design sheet (`icon.png`, `adaptive-icon.png`, `splash.png`,
-`favicon.png` in `assets/`) — cropped out phone-bezel/UI-chrome artifacts, padded onto your
-exact navy (`#0B1E2D`) for corner-safe masking, matched in `app.json`'s `backgroundColor`.
-One honest tradeoff: your reference sheet included small pre-separated Android adaptive-icon
-layers (transparent foreground + background, ~157px), but at that resolution they'd look
-blurry upscaled to real device sizes. I used the much larger flattened App Icon panel (459px)
-for both iOS and Android instead — same art, consistently sharper, at the cost of Android's
-own mask potentially clipping a sliver of the dragon/pyramid at the very edges (the centered
-tree + "GATHALOK" text is padded well inside the safe zone, so that stays fully visible).
-If you get the actual full-resolution original layers from wherever this sheet was generated,
-swap them in for a fully polished result.
+The launcher icon and splash are built as proper native layers (all in `assets/`):
+
+- `icon.png` — full-bleed artwork with no baked-in rounded corners or border, so iOS
+  applies its own mask without a "double corner" look.
+- `adaptive-icon.png` / `adaptive-icon-bg.png` / `adaptive-icon-mono.png` — Android
+  adaptive icon layers. The foreground is the gold tree + GATHALOK wordmark on a
+  transparent canvas, fitted inside the 66dp safe circle so no launcher shape clips it;
+  the background is the artwork's sky blurred toward the brand navy (`#0B1E2D`); the
+  monochrome layer drives Android 13+ themed icons. The tagline is dropped from the
+  launcher icon only, because it is unreadable at that size.
+- `splash-icon.png` — the same logo on transparent, used for the *system* splash.
+  Android 12+ ignores full-screen splash images and only shows a small centred icon, so
+  a poster there would render as a tiny thumbnail.
+- `splash.png` — the full portrait poster. iOS shows it natively (via the
+  `expo-splash-screen` plugin's `ios` block in `app.json`); on Android `App.js` renders
+  a `BrandSplash` overlay that takes over from the system splash on the same navy,
+  fades the poster in, holds it for at least 1.4s and fades out once fonts, theme and
+  auth are ready. A 2s fallback guarantees the native splash can never get stuck.
+
+These are native changes: they need a new build (`eas build` / `expo prebuild`), not an
+OTA update. Expo Go will show the poster overlay but not the launcher icon.
 
 ## What's implemented
 
@@ -109,7 +119,8 @@ src/
   context/               Auth, Theme (10 palettes), Toast
   theme/themes.js         ported from Wardrobe, unchanged
   data/                   categories.js, countries.js (ported from your web assets)
-  components/             shared UI kit (Screen, Card, Button, Input, StoryCard, Stars, ...)
+  components/             shared UI kit (Screen, Card, Button, Input, StoryCard, Stars, ActionSheet, ...)
+  hooks/useFocusedFetch.js load-on-focus + pull-to-refresh + stale-response guard, used by every list screen
   navigation/AppNavigator.js
   screens/                one file per screen
 ```
