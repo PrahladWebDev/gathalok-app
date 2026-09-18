@@ -52,18 +52,85 @@ function ReadingText({ text, style }) {
   );
 }
 
-function CommentItem({ comment, onLike, onDelete, onReport, currentUserId }) {
+function CommentItem({ comment, onLike, onDelete, onReport, requireAuth, storyId, currentUserId, depth = 0 }) {
   const theme = useTheme();
+  const toast = useToast();
   const mine = currentUserId && comment.author?._id === currentUserId;
+  const isReply = depth > 0;
+  const avatarSize = isReply ? 28 : 36;
+
+  const [replyCount, setReplyCount] = useState(comment.replyCount || 0);
+  const [showReplyBox, setShowReplyBox] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replyLoading, setReplyLoading] = useState(false);
+  const [replies, setReplies] = useState([]);
+  const [repliesLoaded, setRepliesLoaded] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+
+  const fetchReplies = async () => {
+    setLoadingReplies(true);
+    try {
+      const res = await api.get(`/comments/${storyId}`, { params: { parent: comment._id } });
+      setReplies(res.data.data || []);
+      setRepliesLoaded(true);
+      setShowReplies(true);
+    } catch (err) { toast('Failed to load replies.', 'error'); }
+    setLoadingReplies(false);
+  };
+
+  const toggleReplies = () => {
+    if (showReplies) { setShowReplies(false); return; }
+    if (repliesLoaded) { setShowReplies(true); return; }
+    fetchReplies();
+  };
+
+  const submitReply = async () => {
+    if (!requireAuth()) return;
+    if (!replyText.trim()) return;
+    setReplyLoading(true);
+    try {
+      const res = await api.post(`/comments/${storyId}`, { content: replyText.trim(), parent: comment._id });
+      setReplyCount((c) => c + 1);
+      if (repliesLoaded) {
+        setReplies((prev) => [res.data.data, ...prev]);
+        setShowReplies(true);
+      } else {
+        // Older replies haven't been fetched yet — load the full list
+        // (it already includes the new one) instead of showing just one.
+        await fetchReplies();
+      }
+      setReplyText('');
+      setShowReplyBox(false);
+      toast('Reply posted!');
+    } catch (err) { toast('Failed to post reply.', 'error'); }
+    setReplyLoading(false);
+  };
+
+  const likeReply = async (id) => {
+    const count = await onLike(id);
+    if (typeof count === 'number') {
+      setReplies((prev) => prev.map((r) => (r._id === id ? { ...r, likeCount: count } : r)));
+    }
+  };
+
+  const deleteReply = async (id) => {
+    const ok = await onDelete(id);
+    if (ok) {
+      setReplies((prev) => prev.filter((r) => r._id !== id));
+      setReplyCount((c) => Math.max(0, c - 1));
+    }
+  };
+
   return (
     <View style={{ flexDirection: 'row', marginBottom: 16 }}>
       <View style={{
-        width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.accentSoft,
+        width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, backgroundColor: theme.colors.accentSoft,
         alignItems: 'center', justifyContent: 'center', marginRight: 10,
         borderWidth: theme.border.width, borderColor: theme.colors.text,
       }}>
         {comment.author?.avatar?.url ? (
-          <Image source={{ uri: comment.author.avatar.url }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+          <Image source={{ uri: comment.author.avatar.url }} style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }} />
         ) : (
           <Text style={{ fontWeight: '700', color: theme.colors.accent }}>{comment.author?.name?.[0]?.toUpperCase() || '?'}</Text>
         )}
@@ -74,7 +141,7 @@ function CommentItem({ comment, onLike, onDelete, onReport, currentUserId }) {
           <Text style={theme.typography.small}>{new Date(comment.createdAt).toLocaleDateString()}</Text>
         </View>
         <Text style={[theme.typography.body, { marginTop: 2 }]}>{comment.content}</Text>
-        <View style={{ flexDirection: 'row', marginTop: 6 }}>
+        <View style={{ flexDirection: 'row', marginTop: 6, flexWrap: 'wrap' }}>
           <TouchableOpacity
             onPress={() => onLike(comment._id)}
             hitSlop={theme.hitSlop}
@@ -84,6 +151,20 @@ function CommentItem({ comment, onLike, onDelete, onReport, currentUserId }) {
           >
             <Text style={theme.typography.small}>♥ {comment.likeCount || 0}</Text>
           </TouchableOpacity>
+          {!isReply ? (
+            <TouchableOpacity
+              onPress={() => {
+                if (!showReplyBox && !requireAuth()) return;
+                setShowReplyBox((v) => !v);
+              }}
+              hitSlop={theme.hitSlop}
+              accessibilityRole="button"
+              accessibilityLabel={showReplyBox ? 'Cancel reply' : 'Reply to comment'}
+              style={{ marginRight: 16, minHeight: 32, justifyContent: 'center' }}
+            >
+              <Text style={theme.typography.small}>{showReplyBox ? 'Cancel' : '↩ Reply'}</Text>
+            </TouchableOpacity>
+          ) : null}
           {mine ? (
             <TouchableOpacity
               onPress={() => onDelete(comment._id)}
@@ -106,6 +187,58 @@ function CommentItem({ comment, onLike, onDelete, onReport, currentUserId }) {
             </TouchableOpacity>
           )}
         </View>
+
+        {!isReply && replyCount > 0 ? (
+          <TouchableOpacity
+            onPress={toggleReplies}
+            disabled={loadingReplies}
+            hitSlop={theme.hitSlop}
+            accessibilityRole="button"
+            accessibilityLabel={showReplies ? 'Hide replies' : `Show ${replyCount} replies`}
+            style={{ minHeight: 32, justifyContent: 'center' }}
+          >
+            <Text style={[theme.typography.small, { color: theme.colors.accent }]}>
+              {loadingReplies ? '…' : showReplies ? '▲ Hide replies' : `▼ ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {showReplyBox ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, marginBottom: 6 }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Input
+                placeholder="Write a reply…"
+                value={replyText}
+                onChangeText={setReplyText}
+                autoFocus
+                containerStyle={{ marginBottom: 0 }}
+              />
+            </View>
+            {replyLoading ? (
+              <ActivityIndicator color={theme.colors.accent} />
+            ) : (
+              <IconButton name="send" label="Post reply" variant="filled" onPress={submitReply} />
+            )}
+          </View>
+        ) : null}
+
+        {showReplies && replies.length > 0 ? (
+          <View style={{ marginTop: 10 }}>
+            {replies.map((r) => (
+              <CommentItem
+                key={r._id}
+                comment={r}
+                onLike={likeReply}
+                onDelete={deleteReply}
+                onReport={onReport}
+                requireAuth={requireAuth}
+                storyId={storyId}
+                currentUserId={currentUserId}
+                depth={depth + 1}
+              />
+            ))}
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -210,17 +343,19 @@ export default function StoryDetailScreen({ route, navigation }) {
     setCommentLoading(false);
   };
 
+  // Return values let reply rows (managed inside CommentItem) update themselves.
   const likeComment = async (id) => {
-    if (!requireAuth()) return;
+    if (!requireAuth()) return undefined;
     try {
       const res = await api.patch(`/comments/${id}/like`);
       setComments((prev) => prev.map((c) => (c._id === id ? { ...c, likeCount: res.data.likeCount } : c)));
-    } catch (err) {}
+      return res.data.likeCount;
+    } catch (err) { return undefined; }
   };
 
-  const deleteComment = (id) => {
+  const deleteComment = (id) => new Promise((resolve) => {
     Alert.alert('Delete comment?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
       {
         text: 'Delete',
         style: 'destructive',
@@ -230,11 +365,12 @@ export default function StoryDetailScreen({ route, navigation }) {
             setComments((prev) => prev.filter((c) => c._id !== id));
             haptic.warning();
             toast('Comment deleted.');
-          } catch (err) { toast('Failed to delete.', 'error'); }
+            resolve(true);
+          } catch (err) { toast('Failed to delete.', 'error'); resolve(false); }
         },
       },
-    ]);
-  };
+    ], { onDismiss: () => resolve(false) });
+  });
 
   const openReport = (id, type) => {
     if (!requireAuth()) return;
@@ -452,7 +588,7 @@ export default function StoryDetailScreen({ route, navigation }) {
             <Text style={theme.typography.bodyMuted}>No comments yet — be the first to share your thoughts.</Text>
           ) : (
             comments.map((c) => (
-              <CommentItem key={c._id} comment={c} onLike={likeComment} onDelete={deleteComment} onReport={openReport} currentUserId={user?._id} />
+              <CommentItem key={c._id} comment={c} onLike={likeComment} onDelete={deleteComment} onReport={openReport} requireAuth={requireAuth} storyId={story._id} currentUserId={user?._id} />
             ))
           )}
 
