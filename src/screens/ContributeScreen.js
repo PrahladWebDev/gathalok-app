@@ -75,7 +75,7 @@ export default function ContributeScreen({ navigation, route }) {
           shortDescription: s.shortDescription || '', fullStory: s.fullStory || '',
           origin: s.origin || '', significance: s.significance || '',
           coverImage: s.coverImage || null,
-          tags: (s.tags || []).join(', '), references: (s.references || []).join('\n'),
+          tags: (s.tags || []).join(', '), references: (s.references || []).map((r) => (typeof r === 'string' ? r : (r.title || r.url || ''))).filter(Boolean).join('\n'),
         });
       })
       .catch(() => toast('Could not load this story for editing.', 'error'))

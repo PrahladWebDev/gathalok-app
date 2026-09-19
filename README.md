@@ -86,7 +86,11 @@ OTA update. Expo Go will show the poster overlay but not the launcher icon.
 - Country pages, Leaderboard (readers/contributors/stories), Map (country tile grid with story counts)
 - Profile: overview + Bookmarks, Reading History, Achievements, My Contributions
 - Contribute / Edit Story: 4-step wizard matching your web form fields exactly, with image upload
-- Notifications
+- Notifications (including "New follower")
+- **Contributor public profiles + Follow/Unfollow**: tap a contributor on a story or the Ranks tab to open
+  their profile (stories, followers, following, likes). Follow button on the story screen, profile and
+  follower lists. Contributors get "View Public Profile" under Profile. Deep link: `gathalok://u/username`.
+  Needs the updated backend (`/users/:username`, `/users/:id/follow`).
 - Settings: profile editing (avatar/name/username/bio) + theme picker (11 themes) + change password + sign out
   (server URL config removed by request — see "Backend URL" above)
 - **Admin Dashboard** (Profile → Admin Dashboard, only visible when `user.role === 'admin'`):

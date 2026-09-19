@@ -13,7 +13,7 @@ import api from '../api/client';
 
 const TYPE_ICONS = {
   story_approved: '✅', story_rejected: '❌', story_changes: '✏️', story_resubmitted: '🔄',
-  comment: '💬', reply: '↩️', like: '♥', achievement: '🏆', feature: '⭐', announcement: '📢',
+  comment: '💬', reply: '↩️', like: '♥', follow: '👤', achievement: '🏆', feature: '⭐', announcement: '📢',
 };
 
 export default function NotificationsScreen({ navigation }) {
@@ -41,7 +41,10 @@ export default function NotificationsScreen({ navigation }) {
     if (!n.isRead) markRead([n._id]);
     // link is a relative web path like /stories/:slug — pull the slug out for native nav.
     const match = n.link?.match(/\/stories\/([^/?]+)/);
-    if (match) navigation.navigate('StoryDetail', { slug: match[1] });
+    if (match) return navigation.navigate('StoryDetail', { slug: match[1] });
+    // follow notifications link to /u/:username
+    const profileMatch = n.link?.match(/\/u\/([^/?]+)/);
+    if (profileMatch) navigation.navigate('PublicProfile', { username: profileMatch[1] });
   };
 
   return (

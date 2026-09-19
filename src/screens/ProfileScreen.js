@@ -98,6 +98,7 @@ export default function ProfileScreen({ navigation }) {
         <Row icon="trophy-outline" label="Achievements" onPress={() => navigation.navigate('Achievements')} />
         {(user.role === 'contributor' || user.role === 'admin') ? (
           <>
+            <Row icon="person-circle-outline" label="View Public Profile" onPress={() => navigation.navigate('PublicProfile', { username: user.username })} />
             <Row icon="create-outline" label="My Contributions" onPress={() => navigation.navigate('Contributions')} />
             <Row icon="add-circle-outline" label="Submit a Story" onPress={() => navigation.navigate('Contribute')} />
           </>

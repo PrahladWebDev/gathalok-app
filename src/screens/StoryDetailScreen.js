@@ -9,6 +9,7 @@ import PillBadge from '../components/PillBadge';
 import Input from '../components/Input';
 import Stars from '../components/Stars';
 import StoryCard from '../components/StoryCard';
+import FollowButton from '../components/FollowButton';
 import { DetailSkeleton } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import ActionSheet from '../components/ActionSheet';
@@ -443,22 +444,31 @@ export default function StoryDetailScreen({ route, navigation }) {
           ) : null}
 
           {story.contributor ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14 }}>
-              <View style={{
-                width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.accentSoft,
-                alignItems: 'center', justifyContent: 'center', marginRight: 10, overflow: 'hidden',
-                borderWidth: theme.border.width, borderColor: theme.colors.text,
-              }}>
-                {story.contributor.avatar?.url ? (
-                  <Image source={{ uri: story.contributor.avatar.url }} style={{ width: 36, height: 36 }} />
-                ) : (
-                  <Text style={{ fontWeight: '700', color: theme.colors.accent }}>{story.contributor.name?.[0]?.toUpperCase()}</Text>
-                )}
-              </View>
-              <View>
-                <Text style={theme.typography.small}>Contributed by</Text>
-                <Text style={theme.typography.h4}>{story.contributor.name}</Text>
-              </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 }}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${story.contributor.name}'s profile`}
+                onPress={() => story.contributor.username && navigation.navigate('PublicProfile', { username: story.contributor.username })}
+              >
+                <View style={{
+                  width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.accentSoft,
+                  alignItems: 'center', justifyContent: 'center', marginRight: 10, overflow: 'hidden',
+                  borderWidth: theme.border.width, borderColor: theme.colors.text,
+                }}>
+                  {story.contributor.avatar?.url ? (
+                    <Image source={{ uri: story.contributor.avatar.url }} style={{ width: 36, height: 36 }} />
+                  ) : (
+                    <Text style={{ fontWeight: '700', color: theme.colors.accent }}>{story.contributor.name?.[0]?.toUpperCase()}</Text>
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={theme.typography.small}>Contributed by</Text>
+                  <Text style={theme.typography.h4} numberOfLines={1}>{story.contributor.name}</Text>
+                </View>
+              </TouchableOpacity>
+              <FollowButton userId={story.contributor._id} />
             </View>
           ) : null}
 

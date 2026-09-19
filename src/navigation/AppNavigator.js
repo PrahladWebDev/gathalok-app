@@ -16,6 +16,7 @@ import MapScreen from '../screens/MapScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
 import StoryDetailScreen from '../screens/StoryDetailScreen';
 import CountryDetailScreen from '../screens/CountryDetailScreen';
+import PublicProfileScreen from '../screens/PublicProfileScreen';
 
 import ProfileScreen from '../screens/ProfileScreen';
 import BookmarksScreen from '../screens/BookmarksScreen';
@@ -187,6 +188,7 @@ const linking = {
       },
       StoryDetail: 'stories/:slug',
       CountryDetail: 'countries/:countryName',
+      PublicProfile: 'u/:username',
       Auth: {
         screens: {
           Login: 'login',
@@ -219,6 +221,7 @@ export default function AppNavigator() {
         <RootStack.Screen name="Main" component={MainTabs} />
         <RootStack.Screen name="StoryDetail" component={StoryDetailScreen} options={{ animation: 'slide_from_right' }} />
         <RootStack.Screen name="CountryDetail" component={CountryDetailScreen} options={{ headerShown: true, title: '' }} />
+        <RootStack.Screen name="PublicProfile" component={PublicProfileScreen} options={{ animation: 'slide_from_right' }} />
         <RootStack.Screen name="Auth" component={AuthStackNav} options={{ presentation: 'modal' }} />
       </RootStack.Navigator>
     </NavigationContainer>

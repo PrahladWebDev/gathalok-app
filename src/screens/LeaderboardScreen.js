@@ -74,13 +74,15 @@ export default function LeaderboardScreen({ navigation }) {
         rows.map((u, i) => (
           <RankRow key={u._id} index={i} avatarUrl={u.avatar?.url} name={u.name}
             sub={`@${u.username} · ${u.countriesExplored?.length || 0} countries explored`}
-            trailing={<PillBadge label={`${u.storiesRead || 0} read`} tone="accent" />} />
+            trailing={<PillBadge label={`${u.storiesRead || 0} read`} tone="accent" />}
+            onPress={(u.role === 'contributor' || u.role === 'admin') ? () => navigation.navigate('PublicProfile', { username: u.username }) : undefined} />
         ))
       ) : tab === 'contributors' ? (
         rows.map((u, i) => (
           <RankRow key={u._id} index={i} avatarUrl={u.avatar?.url} name={u.name}
             sub={`@${u.username} · ${u.totalLikesReceived || 0} likes received`}
-            trailing={<PillBadge label={`${u.storiesWritten || 0} tales`} tone="accent" />} />
+            trailing={<PillBadge label={`${u.storiesWritten || 0} tales`} tone="accent" />}
+            onPress={() => navigation.navigate('PublicProfile', { username: u.username })} />
         ))
       ) : (
         rows.map((s, i) => (
