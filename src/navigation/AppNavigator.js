@@ -17,6 +17,7 @@ import LeaderboardScreen from '../screens/LeaderboardScreen';
 import StoryDetailScreen from '../screens/StoryDetailScreen';
 import CountryDetailScreen from '../screens/CountryDetailScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
+import FollowingScreen from '../screens/FollowingScreen';
 
 import ProfileScreen from '../screens/ProfileScreen';
 import BookmarksScreen from '../screens/BookmarksScreen';
@@ -60,6 +61,7 @@ function ProfileStackNav() {
       <ProfileStack.Screen name="Contributions" component={ContributionsScreen} options={{ headerShown: false }} />
       <ProfileStack.Screen name="Contribute" component={ContributeScreen} options={{ headerShown: false }} />
       <ProfileStack.Screen name="ContributeEdit" component={ContributeScreen} options={{ headerShown: false }} />
+      <ProfileStack.Screen name="Following" component={FollowingScreen} options={{ headerShown: false }} />
       <ProfileStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
       <ProfileStack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ headerShown: false }} />

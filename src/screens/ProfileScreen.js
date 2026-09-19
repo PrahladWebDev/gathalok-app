@@ -95,6 +95,7 @@ export default function ProfileScreen({ navigation }) {
       <Card style={{ marginBottom: 18, paddingVertical: 4 }}>
         <Row icon="bookmark-outline" label="Bookmarks" onPress={() => navigation.navigate('Bookmarks')} />
         <Row icon="time-outline" label="Reading History" onPress={() => navigation.navigate('History')} />
+        <Row icon="people-outline" label="Following" onPress={() => navigation.navigate('Following')} />
         <Row icon="trophy-outline" label="Achievements" onPress={() => navigation.navigate('Achievements')} />
         {(user.role === 'contributor' || user.role === 'admin') ? (
           <>
