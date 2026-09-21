@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -189,6 +189,18 @@ export default function SettingsScreen({ navigation }) {
             <Input label="New Password" value={newPass} onChangeText={setNewPass} secureTextEntry secureToggle leftIcon="key-outline" helperText="Minimum 6 characters" />
             <Input label="Confirm New Password" value={confirmPass} onChangeText={setConfirmPass} secureTextEntry secureToggle leftIcon="key-outline" />
             <Button title={pwLoading ? 'Updating…' : 'Update Password'} onPress={handleChangePassword} loading={pwLoading} />
+          </Card>
+
+          <Text style={[theme.typography.h2, { marginBottom: 2 }]}>Legal</Text>
+          <Text style={[theme.typography.bodyMuted, { marginBottom: 14 }]}>How we handle your data.</Text>
+          <Card style={{ marginBottom: 28 }}>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://prahladsingh.in/gathalok/privacy-policy/')}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}
+            >
+              <Text style={theme.typography.body}>Privacy Policy</Text>
+              <Ionicons name="open-outline" size={18} color={theme.colors.accent} />
+            </TouchableOpacity>
           </Card>
 
           <Button title="Sign Out" variant="outline" onPress={logout} style={{ marginBottom: 16 }} />
