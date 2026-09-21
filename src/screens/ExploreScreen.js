@@ -95,6 +95,7 @@ export default function ExploreScreen({ navigation, route }) {
 
   const Header = (
     <View>
+      <MagicalTitle title="Explore" subtitle={loading ? 'Searching the archives…' : `${total.toLocaleString()} stories`} />
       <Input
         placeholder="Title, creature, place…"
         value={search}
@@ -137,7 +138,7 @@ export default function ExploreScreen({ navigation, route }) {
   );
 
   return (
-    <Screen titleNode={<MagicalTitle title="Explore" subtitle={loading ? 'Searching the archives…' : `${total.toLocaleString()} stories`} />} padded>
+    <Screen padded>
       {!loading && stories.length === 0 ? (
         <View style={{ flex: 1 }}>
           {Header}
