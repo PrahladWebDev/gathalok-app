@@ -12,16 +12,19 @@ import { haptic } from '../../utils/haptics';
 export default function LoginScreen({ navigation }) {
   const theme = useTheme();
   const toast = useToast();
-  const { login } = useAuth();
+  const { login, resendVerification } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [notVerifiedEmail, setNotVerifiedEmail] = useState(null);
   const passwordRef = useRef(null);
 
   const submit = async () => {
     if (!email.trim() || !password) { haptic.warning(); setError('Enter your email and password.'); return; }
     setError('');
+    setNotVerifiedEmail(null);
     setLoading(true);
     try {
       await login(email.trim(), password);
@@ -31,8 +34,22 @@ export default function LoginScreen({ navigation }) {
     } catch (err) {
       haptic.error();
       setError(err.message || 'Login failed');
+      if (err.notVerified) setNotVerifiedEmail(err.email || email.trim());
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!notVerifiedEmail) return;
+    setResending(true);
+    try {
+      const data = await resendVerification(notVerifiedEmail);
+      toast(data.message || 'Verification email sent!');
+    } catch (err) {
+      toast(err.message || 'Failed to resend verification email', 'error');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -79,8 +96,36 @@ export default function LoginScreen({ navigation }) {
           onSubmitEditing={submit}
         />
 
+        <View style={{ alignItems: 'flex-end', marginTop: -6, marginBottom: 14 }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ForgotPassword')}
+            hitSlop={theme.hitSlop}
+            accessibilityRole="button"
+            accessibilityLabel="Forgot password"
+            style={{ minHeight: 32, justifyContent: 'center' }}
+          >
+            <Text style={[theme.typography.caption, { color: theme.colors.accent, fontWeight: '600' }]}>Forgot password?</Text>
+          </TouchableOpacity>
+        </View>
+
         {error ? (
-          <Text accessibilityLiveRegion="polite" style={{ color: theme.colors.danger, marginBottom: 10 }}>⚠ {error}</Text>
+          <View style={{ marginBottom: 10 }}>
+            <Text accessibilityLiveRegion="polite" style={{ color: theme.colors.danger }}>⚠ {error}</Text>
+            {notVerifiedEmail ? (
+              <TouchableOpacity
+                onPress={handleResend}
+                disabled={resending}
+                hitSlop={theme.hitSlop}
+                accessibilityRole="button"
+                accessibilityLabel="Resend verification email"
+                style={{ minHeight: 32, justifyContent: 'center', marginTop: 4 }}
+              >
+                <Text style={[theme.typography.caption, { color: theme.colors.accent, fontWeight: '700', textDecorationLine: 'underline' }]}>
+                  {resending ? 'Sending…' : 'Resend verification email'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         ) : null}
 
         <Button title={loading ? 'Please wait…' : 'Sign In'} onPress={submit} loading={loading} style={{ marginTop: 6 }} />

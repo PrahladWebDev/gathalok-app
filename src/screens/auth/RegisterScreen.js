@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -14,10 +15,12 @@ const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 export default function RegisterScreen({ navigation }) {
   const theme = useTheme();
   const toast = useToast();
-  const { register } = useAuth();
+  const { register, resendVerification } = useAuth();
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState(null);
   const usernameRef = useRef(null);
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
@@ -42,10 +45,9 @@ export default function RegisterScreen({ navigation }) {
     setError('');
     setLoading(true);
     try {
-      await register({ ...form, name: form.name.trim(), email: form.email.trim() });
+      const data = await register({ ...form, name: form.name.trim(), email: form.email.trim() });
       haptic.success();
-      toast('Welcome to GathaLok!');
-      navigation.getParent()?.goBack();
+      setRegisteredEmail(data.email || form.email.trim());
     } catch (err) {
       haptic.error();
       setError(err.message || 'Registration failed');
@@ -53,6 +55,54 @@ export default function RegisterScreen({ navigation }) {
       setLoading(false);
     }
   };
+
+  const handleResend = async () => {
+    if (!registeredEmail) return;
+    setResending(true);
+    try {
+      const data = await resendVerification(registeredEmail);
+      toast(data.message || 'Verification email sent!');
+    } catch (err) {
+      toast(err.message || 'Failed to resend verification email', 'error');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  // ─── "Check your email" panel, shown after a successful registration ───
+  if (registeredEmail) {
+    return (
+      <Screen scroll safeTop tabInset={false} padded>
+        <FadeInUp distance={12}>
+          <View style={{ alignItems: 'center', marginTop: 60 }}>
+            <Ionicons name="mail-outline" size={44} color={theme.colors.accent} />
+            <Text style={[theme.typography.h2, { marginTop: 16, textAlign: 'center' }]}>Check Your Email</Text>
+            <Text style={[theme.typography.bodyMuted, { marginTop: 8, textAlign: 'center' }]}>
+              We've sent a verification link to{'\n'}<Text style={{ fontWeight: '700', color: theme.colors.text }}>{registeredEmail}</Text>.{'\n'}
+              Click it to activate your account, then sign in.
+            </Text>
+
+            <Button
+              title={resending ? 'Sending…' : 'Resend Verification Email'}
+              onPress={handleResend}
+              loading={resending}
+              style={{ marginTop: 28, alignSelf: 'stretch' }}
+            />
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Login')}
+              hitSlop={theme.hitSlop}
+              accessibilityRole="button"
+              accessibilityLabel="Already verified, sign in"
+              style={{ minHeight: 44, justifyContent: 'center', marginTop: 16 }}
+            >
+              <Text style={[theme.typography.body, { color: theme.colors.accent, fontWeight: '700' }]}>Already verified? Sign in</Text>
+            </TouchableOpacity>
+          </View>
+        </FadeInUp>
+      </Screen>
+    );
+  }
 
   return (
     <Screen scroll keyboard safeTop tabInset={false} padded>

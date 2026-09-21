@@ -36,8 +36,11 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  // Backend returns { user, token } directly on both routes — no email
-  // verification step in this app (unlike Wardrobe).
+  // Backend requires email verification before login: register() no longer
+  // logs the user in — it returns { requiresVerification, email, message }
+  // and the caller (RegisterScreen) shows a "check your email" state.
+  // login() throws with .notVerified === true if the account hasn't been
+  // verified yet; RegisterScreen/LoginScreen surface a resend action.
   const login = useCallback(async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     return applySession(data);
@@ -45,7 +48,33 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async ({ name, username, email, password }) => {
     const { data } = await api.post('/auth/register', { name, username, email, password });
-    return applySession(data);
+    return data; // { success, requiresVerification, email, message } — no session yet
+  }, []);
+
+  // Resolves a verification link's token. On success the backend also logs
+  // the user in (same as web), so this applies the returned session.
+  const verifyEmail = useCallback(async (token) => {
+    const { data } = await api.get(`/auth/verify-email/${token}`);
+    if (data.token) await applySession(data);
+    return data;
+  }, [applySession]);
+
+  const resendVerification = useCallback(async (email) => {
+    const { data } = await api.post('/auth/resend-verification', { email });
+    return data;
+  }, []);
+
+  const forgotPassword = useCallback(async (email) => {
+    const { data } = await api.post('/auth/forgot-password', { email });
+    return data;
+  }, []);
+
+  // Resolves a reset-password link's token + new password. On success the
+  // backend logs the user in, same as verifyEmail above.
+  const resetPassword = useCallback(async (token, password) => {
+    const { data } = await api.post(`/auth/reset-password/${token}`, { password });
+    if (data.token) await applySession(data);
+    return data;
   }, [applySession]);
 
   const logout = useCallback(async () => {
@@ -90,6 +119,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, loading,
       login, register, logout, updateProfile, uploadAvatar, changePassword, becomeContributor,
+      verifyEmail, resendVerification, forgotPassword, resetPassword,
     }}>
       {children}
     </AuthContext.Provider>

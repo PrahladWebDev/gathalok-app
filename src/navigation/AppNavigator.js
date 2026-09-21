@@ -9,6 +9,9 @@ import { haptic } from '../utils/haptics';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
+import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
 
 import HomeScreen from '../screens/HomeScreen';
 import ExploreScreen from '../screens/ExploreScreen';
@@ -142,6 +145,9 @@ function AuthStackNav() {
     <AuthStack.Navigator screenOptions={{ ...screenOptions, headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <AuthStack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
     </AuthStack.Navigator>
   );
 }
@@ -195,6 +201,9 @@ const linking = {
         screens: {
           Login: 'login',
           Register: 'register',
+          ForgotPassword: 'forgot-password',
+          ResetPassword: 'reset-password/:token',
+          VerifyEmail: 'verify-email/:token',
         },
       },
     },

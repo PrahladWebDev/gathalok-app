@@ -51,6 +51,11 @@ api.interceptors.response.use(
     const message = data?.message || err.message || 'Something went wrong';
     const wrapped = new Error(message);
     wrapped.status = err?.response?.status;
+    // Carried through so auth screens can react (e.g. show a "resend
+    // verification email" action) without re-parsing the raw response.
+    wrapped.notVerified = !!data?.notVerified;
+    wrapped.requiresVerification = !!data?.requiresVerification;
+    wrapped.email = data?.email;
     return Promise.reject(wrapped);
   }
 );
