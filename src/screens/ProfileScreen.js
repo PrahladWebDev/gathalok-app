@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { useTheme } from '../context/ThemeContext';
@@ -35,7 +36,7 @@ export default function ProfileScreen({ navigation }) {
 
   if (!user) {
     return (
-      <Screen title="Profile" scroll>
+      <Screen titleNode={<MagicalTitle title="Profile" />} scroll>
         <Card style={{ alignItems: 'center', paddingVertical: 36 }}>
           <Ionicons name="person-circle-outline" size={56} color={theme.colors.accent} />
           <Text style={[theme.typography.h2, { marginTop: 12 }]}>Sign in to GathaLok</Text>
@@ -60,7 +61,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   return (
-    <Screen title="Profile" scroll>
+    <Screen titleNode={<MagicalTitle title="Profile" />} scroll>
       <Card style={{ alignItems: 'center', paddingVertical: 24, marginBottom: 18 }}>
         <View style={{
           width: 76, height: 76, borderRadius: 38, backgroundColor: theme.colors.accentSoft,

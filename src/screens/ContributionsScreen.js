@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import PillBadge from '../components/PillBadge';
 import Button from '../components/Button';
@@ -34,8 +35,7 @@ export default function ContributionsScreen({ navigation }) {
 
   return (
     <Screen
-      title="My Contributions"
-      subtitle={status === 'ready' && stories.length ? `${stories.length} ${stories.length === 1 ? 'tale' : 'tales'}` : undefined}
+      titleNode={<MagicalTitle title="My Contributions" subtitle={status === 'ready' && stories.length ? `${stories.length} ${stories.length === 1 ? 'tale' : 'tales'}` : undefined} />}
       scroll
       refreshing={refreshing}
       onRefresh={refresh}

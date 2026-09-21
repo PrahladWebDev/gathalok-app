@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Chip from '../components/Chip';
 import StoryCard from '../components/StoryCard';
 import EmptyState from '../components/EmptyState';
@@ -118,8 +119,7 @@ export default function BookmarksScreen({ navigation }) {
 
   return (
     <Screen
-      title="Bookmarks"
-      subtitle={status === 'ready' && bookmarks.length ? `${bookmarks.length} saved ${bookmarks.length === 1 ? 'tale' : 'tales'}` : undefined}
+      titleNode={<MagicalTitle title="Bookmarks" subtitle={status === 'ready' && bookmarks.length ? `${bookmarks.length} saved ${bookmarks.length === 1 ? 'tale' : 'tales'}` : undefined} />}
       scroll
       refreshing={refreshing}
       onRefresh={refresh}

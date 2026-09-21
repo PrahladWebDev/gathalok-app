@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import MagicParticles from './MagicParticles';
 
 // The one screen shell. Gives every screen the same header language (Playfair
 // title + muted subtitle + right-side actions), safe-area top inset, optional
@@ -24,6 +25,7 @@ import { useTheme } from '../context/ThemeContext';
 //                       outside the ScrollView so it never scrolls away
 export default function Screen({
   title,
+  titleNode,
   subtitle,
   right,
   children,
@@ -44,17 +46,21 @@ export default function Screen({
   const insets = useSafeAreaInsets();
   const pad = theme.layout.screenPadding;
 
-  const header = title ? (
+  const header = (title || titleNode) ? (
     <View style={[{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: pad, marginBottom: 14 }, headerStyle]}>
       <View style={{ flex: 1, paddingRight: 8 }}>
-        <Text style={theme.typography.h1} accessibilityRole="header">{title}</Text>
-        {subtitle ? <Text style={[theme.typography.bodyMuted, { marginTop: 2 }]}>{subtitle}</Text> : null}
+        {titleNode || (
+          <>
+            <Text style={theme.typography.h1} accessibilityRole="header">{title}</Text>
+            {subtitle ? <Text style={[theme.typography.bodyMuted, { marginTop: 2 }]}>{subtitle}</Text> : null}
+          </>
+        )}
       </View>
       {right ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>{right}</View> : null}
     </View>
   ) : null;
 
-  const paddingTop = (safeTop ? insets.top : 0) + (title ? 14 : 8);
+  const paddingTop = (safeTop ? insets.top : 0) + ((title || titleNode) ? 14 : 8);
   const paddingBottom = tabInset ? theme.layout.tabBarInset : insets.bottom + 24;
 
   let body;
@@ -86,6 +92,7 @@ export default function Screen({
 
   const root = (
     <View style={[{ flex: 1, backgroundColor: theme.colors.bg }, style]}>
+      <MagicParticles />
       {body}
       {footer}
     </View>

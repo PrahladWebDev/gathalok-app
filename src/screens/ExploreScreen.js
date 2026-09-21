@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Input from '../components/Input';
 import Chip from '../components/Chip';
 import StoryCard from '../components/StoryCard';
@@ -136,7 +137,7 @@ export default function ExploreScreen({ navigation, route }) {
   );
 
   return (
-    <Screen title="Explore" subtitle={loading ? 'Searching the archives…' : `${total.toLocaleString()} stories`} padded>
+    <Screen titleNode={<MagicalTitle title="Explore" subtitle={loading ? 'Searching the archives…' : `${total.toLocaleString()} stories`} />} padded>
       {!loading && stories.length === 0 ? (
         <View style={{ flex: 1 }}>
           {Header}

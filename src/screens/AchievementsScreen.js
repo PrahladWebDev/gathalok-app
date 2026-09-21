@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import PillBadge from '../components/PillBadge';
 import EmptyState from '../components/EmptyState';
@@ -24,8 +25,7 @@ export default function AchievementsScreen() {
 
   return (
     <Screen
-      title="Achievements"
-      subtitle={status === 'ready' ? `${unlockedIds.size} of ${all.length} unlocked` : undefined}
+      titleNode={<MagicalTitle title="Achievements" subtitle={status === 'ready' ? `${unlockedIds.size} of ${all.length} unlocked` : undefined} />}
       scroll
       refreshing={refreshing}
       onRefresh={refresh}

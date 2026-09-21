@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import Chip from '../components/Chip';
 import EmptyState from '../components/EmptyState';
@@ -49,8 +50,7 @@ export default function NotificationsScreen({ navigation }) {
 
   return (
     <Screen
-      title="Notifications"
-      subtitle={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : undefined}
+      titleNode={<MagicalTitle title="Notifications" subtitle={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : undefined} />}
       scroll
       refreshing={refreshing}
       onRefresh={refresh}

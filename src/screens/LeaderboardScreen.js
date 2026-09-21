@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import Chip from '../components/Chip';
 import PillBadge from '../components/PillBadge';
@@ -57,7 +58,7 @@ export default function LeaderboardScreen({ navigation }) {
   const rows = tab === 'readers' ? data?.topReaders : tab === 'contributors' ? data?.topContributors : data?.topStories;
 
   return (
-    <Screen title="Leaderboard" subtitle="The most devoted seekers & storytellers" scroll refreshing={refreshing} onRefresh={refresh}>
+    <Screen titleNode={<MagicalTitle title="Leaderboard" subtitle="The most devoted seekers & storytellers" />} scroll refreshing={refreshing} onRefresh={refresh}>
       <View style={{ flexDirection: 'row', marginBottom: 16 }}>
         {TABS.map((t) => (
           <Chip key={t.id} label={t.label} active={tab === t.id} onPress={() => setTab(t.id)} />

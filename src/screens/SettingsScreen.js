@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -125,7 +126,7 @@ export default function SettingsScreen({ navigation }) {
   };
 
   return (
-    <Screen title="Settings" scroll>
+    <Screen titleNode={<MagicalTitle title="Settings" />} scroll>
       {user ? (
         <>
           <Text style={[theme.typography.h2, { marginBottom: 2 }]}>Profile</Text>

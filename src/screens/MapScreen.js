@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList } from 'react-native';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import PillBadge from '../components/PillBadge';
 import { SkeletonGrid } from '../components/Skeleton';
@@ -28,7 +29,7 @@ export default function MapScreen({ navigation }) {
   const sorted = [...COUNTRIES].sort((a, b) => ((counts || {})[b.name] || 0) - ((counts || {})[a.name] || 0));
 
   return (
-    <Screen title="Realms" subtitle="Every region GathaLok has reached" scroll refreshing={refreshing} onRefresh={refresh}>
+    <Screen titleNode={<MagicalTitle title="Realms" subtitle="Every region GathaLok has reached" />} scroll refreshing={refreshing} onRefresh={refresh}>
       {status === 'loading' ? (
         <SkeletonGrid count={10} />
       ) : status === 'error' ? (

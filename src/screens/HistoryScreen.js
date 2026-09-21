@@ -1,5 +1,6 @@
 import React from 'react';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import StoryCard from '../components/StoryCard';
 import EmptyState from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
@@ -14,7 +15,7 @@ export default function HistoryScreen({ navigation }) {
   );
 
   return (
-    <Screen title="Reading History" scroll refreshing={refreshing} onRefresh={refresh}>
+    <Screen titleNode={<MagicalTitle title="Reading History" />} scroll refreshing={refreshing} onRefresh={refresh}>
       {status === 'loading' ? (
         <SkeletonList count={5} />
       ) : status === 'error' ? (

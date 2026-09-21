@@ -9,6 +9,7 @@ import StoryCard from '../components/StoryCard';
 import { SkeletonList } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import FadeInUp from '../components/FadeInUp';
+import MagicalTitle from '../components/MagicalTitle';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -81,7 +82,7 @@ export default function HomeScreen({ navigation }) {
 
   if (loading) {
     return (
-      <Screen title="GathaLok" subtitle="Living archive of world folklore" scroll>
+      <Screen titleNode={<MagicalTitle title="GathaLok" subtitle="Living archive of world folklore" />} scroll>
         <SkeletonList count={4} />
       </Screen>
     );
@@ -89,14 +90,14 @@ export default function HomeScreen({ navigation }) {
 
   if (error) {
     return (
-      <Screen title="GathaLok" scroll refreshing={refreshing} onRefresh={onRefresh}>
+      <Screen titleNode={<MagicalTitle title="GathaLok" />} scroll refreshing={refreshing} onRefresh={onRefresh}>
         <ErrorState message="Couldn't reach the archive. Check your server connection in Settings." onRetry={load} />
       </Screen>
     );
   }
 
   return (
-    <Screen title="GathaLok" subtitle="Living archive of world folklore" scroll refreshing={refreshing} onRefresh={onRefresh}>
+    <Screen titleNode={<MagicalTitle title="GathaLok" subtitle="Living archive of world folklore" />} scroll refreshing={refreshing} onRefresh={onRefresh}>
       {/* Hero — rotating featured story */}
       {heroStory ? (
         <FadeInUp distance={14}>

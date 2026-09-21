@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import Screen from '../components/Screen';
+import MagicalTitle from '../components/MagicalTitle';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import PillBadge from '../components/PillBadge';
@@ -45,7 +46,7 @@ export default function FollowingScreen({ navigation }) {
   const loadMore = () => { setState((p) => ({ ...p, loadingMore: true })); fetchPage(state.page + 1, false); };
 
   return (
-    <Screen title="Following" subtitle="Storytellers you follow" scroll refreshing={refreshing} onRefresh={refresh}>
+    <Screen titleNode={<MagicalTitle title="Following" subtitle="Storytellers you follow" />} scroll refreshing={refreshing} onRefresh={refresh}>
       {state.status === 'loading' ? (
         <SkeletonList count={4} />
       ) : state.status === 'error' ? (
