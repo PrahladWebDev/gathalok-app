@@ -1,12 +1,27 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { TOKEN_KEY, USER_KEY } from '../api/client';
+import api, { TOKEN_KEY, USER_KEY, setUnauthorizedHandler } from '../api/client';
+import { useToast } from './ToastContext';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
+
+  // Token expired/invalid -> clear session and tell the user to log in again.
+  useEffect(() => {
+    setUnauthorizedHandler(async () => {
+      // Several requests can fail together — only react once per session.
+      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      if (!token) return;
+      await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+      setUser(null);
+      toast('Your session has expired. Please log in again.', 'error', 3500);
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [toast]);
 
   useEffect(() => {
     (async () => {

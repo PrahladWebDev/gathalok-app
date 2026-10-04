@@ -106,9 +106,7 @@ function ThemedApp({ onReady }) {
       {!fontsReady ? (
         <StartupScreen message="Preparing the app…" />
       ) : (
-        <ToastProvider>
-          <AppNavigator />
-        </ToastProvider>
+        <AppNavigator />
       )}
     </>
   );
@@ -121,9 +119,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <ThemedApp onReady={onReady} />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <ThemedApp onReady={onReady} />
+          </AuthProvider>
+        </ToastProvider>
       </ThemeProvider>
       <BrandSplash ready={ready} />
     </SafeAreaProvider>
