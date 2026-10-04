@@ -10,6 +10,7 @@ import { SkeletonList } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import FadeInUp from '../components/FadeInUp';
 import MagicalTitle from '../components/MagicalTitle';
+import CategoryIllustration from '../components/CategoryIllustration';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -98,6 +99,34 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <Screen titleNode={<MagicalTitle title="GathaLok" subtitle="Living archive of world folklore" />} scroll refreshing={refreshing} onRefresh={onRefresh}>
+      {/* Categories — round illustrated chips, one horizontal scrolling row at the top */}
+      <SectionHeader label="Discover" title="Browse by Category" />
+      <FlatList
+        data={CATEGORIES}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(c) => c.slug}
+        contentContainerStyle={{ paddingRight: 8 }}
+        style={{ marginBottom: 24 }}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={() => navigation.navigate('ExploreTab', { category: item.slug })}
+            accessibilityRole="button"
+            accessibilityLabel={`Browse ${item.name}`}
+            style={{ width: 84, marginRight: 8, alignItems: 'center' }}
+          >
+            <CategoryIllustration slug={item.slug} color={item.color} size={72} />
+            <Text
+              style={[theme.typography.small, { marginTop: 6, textAlign: 'center', textTransform: 'none', fontSize: 11, color: theme.colors.text }]}
+              numberOfLines={2}
+            >
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+
       {/* Hero — rotating featured story */}
       {heroStory ? (
         <FadeInUp distance={14}>
@@ -152,23 +181,6 @@ export default function HomeScreen({ navigation }) {
         )}
         style={{ marginBottom: 24 }}
       />
-
-      {/* Categories */}
-      <SectionHeader label="Discover" title="Browse by Category" />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 }}>
-        {CATEGORIES.map((cat) => (
-          <Card
-            key={cat.slug}
-            onPress={() => navigation.navigate('ExploreTab', { category: cat.slug })}
-            style={{ width: '48%', marginBottom: 10, alignItems: 'center', paddingVertical: 16 }}
-          >
-            <Text style={{ fontSize: 26 }}>{cat.icon}</Text>
-            <Text style={[theme.typography.small, { marginTop: 6, textAlign: 'center', textTransform: 'none', fontSize: 12 }]} numberOfLines={2}>
-              {cat.name}
-            </Text>
-          </Card>
-        ))}
-      </View>
 
       {/* CTA */}
       <Card style={{ alignItems: 'center', paddingVertical: 28, marginTop: 4 }}>
