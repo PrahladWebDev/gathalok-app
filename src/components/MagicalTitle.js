@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { View, Text, Animated, Easing, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Path, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
+import { View, Text, Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
+import Svg, { Path, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import { useTheme } from '../context/ThemeContext';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-
-// ---- Glow: a soft breathing radial halo sitting behind the wordmark ----
-function GlowOrb({ color, size }) {
+// ---- Glow: a soft breathing fog spanning the full screen width behind the wordmark ----
+// `bleed` = how far the parent is inset from the screen's left edge, so the fog
+// can break out of the padded header and run edge to edge.
+function GlowOrb({ color, width, height, bleed }) {
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -20,44 +20,47 @@ function GlowOrb({ color, size }) {
     return () => loop.stop();
   }, []);
 
-  const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] });
-  const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0.85] });
+  // Only breathe vertically so the fog never changes its left/right reach.
+  const scaleY = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.1] });
+  const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0.9] });
 
   return (
     <Animated.View
       pointerEvents="none"
-      style={{ position: 'absolute', width: size, height: size, top: -size * 0.34, alignSelf: 'center', opacity, transform: [{ scale }] }}
+      style={{ position: 'absolute', left: -bleed, width, height, top: '45%', marginTop: -height / 2, opacity, transform: [{ scaleY }] }}
     >
-      <Svg width={size} height={size}>
+      <Svg width={width} height={height}>
         <Defs>
+          {/* objectBoundingBox units: the gradient stretches into a wide ellipse that fades to 0 exactly at the left and right screen edges */}
           <RadialGradient id="magicGlow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor={color} stopOpacity="0.55" />
-            <Stop offset="60%" stopColor={color} stopOpacity="0.16" />
+            <Stop offset="0%" stopColor={color} stopOpacity="0.5" />
+            <Stop offset="55%" stopColor={color} stopOpacity="0.2" />
             <Stop offset="100%" stopColor={color} stopOpacity="0" />
           </RadialGradient>
         </Defs>
-        <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#magicGlow)" />
+        <Rect x="0" y="0" width={width} height={height} fill="url(#magicGlow)" />
       </Svg>
     </Animated.View>
   );
 }
 
-// ---- Waves: seamless bands of light drifting under the wordmark ----
-function WaveLayer({ color, opacity, height, amplitude, duration, delay = 0 }) {
+// ---- Waves: seamless bands of light drifting under the wordmark, edge to edge ----
+function WaveLayer({ color, opacity, height, amplitude, duration, delay = 0, width, bleed }) {
   const shift = useRef(new Animated.Value(0)).current;
-  const bandW = Math.max(SCREEN_W, 400);
 
   useEffect(() => {
+    shift.setValue(0);
     const loop = Animated.loop(
-      Animated.timing(shift, { toValue: -bandW, duration, delay, easing: Easing.linear, useNativeDriver: true })
+      Animated.timing(shift, { toValue: -width, duration, delay, easing: Easing.linear, useNativeDriver: true })
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [width]);
 
+  // 4 segments (up, down, up, down) so the tangent matches where one copy meets the next.
   const d = useMemo(() => {
-    const segs = 3;
-    const segW = bandW / segs;
+    const segs = 4;
+    const segW = width / segs;
     let path = `M0 ${amplitude}`;
     for (let i = 0; i < segs; i++) {
       const xMid = i * segW + segW / 2;
@@ -66,20 +69,20 @@ function WaveLayer({ color, opacity, height, amplitude, duration, delay = 0 }) {
       path += ` Q ${xMid} ${yCtrl}, ${xEnd} ${amplitude}`;
     }
     return path;
-  }, [bandW, amplitude]);
+  }, [width, amplitude]);
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height, flexDirection: 'row', opacity, transform: [{ translateX: shift }] }}
-    >
-      <Svg width={bandW} height={height}>
-        <Path d={d} fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
-      </Svg>
-      <Svg width={bandW} height={height}>
-        <Path d={d} fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
-      </Svg>
-    </Animated.View>
+    // Clip window = full screen width, pulled out past the header padding.
+    <View pointerEvents="none" style={{ position: 'absolute', left: -bleed, width, bottom: 0, height, overflow: 'hidden' }}>
+      <Animated.View style={{ width: width * 2, height, flexDirection: 'row', opacity, transform: [{ translateX: shift }] }}>
+        <Svg width={width} height={height}>
+          <Path d={d} fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+        </Svg>
+        <Svg width={width} height={height}>
+          <Path d={d} fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+        </Svg>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -120,6 +123,8 @@ function Sparkle({ left, size, color, delay, duration }) {
  */
 export default function MagicalTitle({ title, subtitle }) {
   const theme = useTheme();
+  const { width: screenW } = useWindowDimensions();
+  const bleed = theme.layout?.screenPadding ?? 20; // header sits this far in from the screen edge
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -149,9 +154,9 @@ export default function MagicalTitle({ title, subtitle }) {
 
   return (
     <View style={styles.wrap}>
-      <GlowOrb color={gold} size={180} />
-      <WaveLayer color={theme.colors.accent} opacity={0.5} height={30} amplitude={10} duration={4200} />
-      <WaveLayer color={gold} opacity={0.3} height={22} amplitude={6} duration={6000} delay={300} />
+      <GlowOrb color={gold} width={screenW} height={150} bleed={bleed} />
+      <WaveLayer color={theme.colors.accent} opacity={0.5} height={30} amplitude={10} duration={4200} width={screenW} bleed={bleed} />
+      <WaveLayer color={gold} opacity={0.3} height={22} amplitude={6} duration={6000} delay={300} width={screenW} bleed={bleed} />
       {sparkles.map((s, i) => <Sparkle key={i} color={gold} {...s} />)}
       <Animated.Text
         accessibilityRole="header"

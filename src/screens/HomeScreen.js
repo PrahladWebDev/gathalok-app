@@ -106,7 +106,8 @@ export default function HomeScreen({ navigation }) {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(c) => c.slug}
-        contentContainerStyle={{ paddingRight: 8 }}
+        // vertical padding gives the colour glow room (the list clips its content)
+        contentContainerStyle={{ paddingRight: 8, paddingVertical: 2 }}
         style={{ marginBottom: 24 }}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -114,11 +115,11 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('ExploreTab', { category: item.slug })}
             accessibilityRole="button"
             accessibilityLabel={`Browse ${item.name}`}
-            style={{ width: 84, marginRight: 8, alignItems: 'center' }}
+            style={{ width: 92, alignItems: 'center' }}
           >
-            <CategoryIllustration slug={item.slug} color={item.color} size={72} />
+            <CategoryIllustration slug={item.slug} color={item.color} size={72} glow />
             <Text
-              style={[theme.typography.small, { marginTop: 6, textAlign: 'center', textTransform: 'none', fontSize: 11, color: theme.colors.text }]}
+              style={[theme.typography.small, { marginTop: 0, textAlign: 'center', textTransform: 'none', fontSize: 11, color: theme.colors.text }]}
               numberOfLines={2}
             >
               {item.name}

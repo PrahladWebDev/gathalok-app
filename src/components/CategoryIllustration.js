@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import Svg, {
   Circle, Ellipse, Rect, Path, Polygon, Polyline, Line, G, Defs, ClipPath, RadialGradient, Stop,
 } from 'react-native-svg';
@@ -211,11 +212,16 @@ const SCENES = {
   ),
 };
 
-export default function CategoryIllustration({ slug, color = '#4A0E8F', size = 72 }) {
+// `glow` adds a soft halo in the category's own colour around the circle, so
+// the colour bleeds out into the page background. The halo needs room, so the
+// component renders a box ~1.28x the circle size when glow is on.
+export default function CategoryIllustration({ slug, color = '#4A0E8F', size = 72, glow = false }) {
   const Scene = SCENES[slug];
   const light = mix(color, '#ffffff', 0.3);
   const dark = mix(color, '#000000', 0.3);
-  return (
+  const glowColor = mix(color, '#ffffff', 0.25); // lifted so dark categories still glow on a dark bg
+
+  const art = (
     <Svg width={size} height={size} viewBox="0 0 100 100">
       <Defs>
         <RadialGradient id={`bg-${slug}`} cx="50%" cy="30%" r="80%">
@@ -232,5 +238,26 @@ export default function CategoryIllustration({ slug, color = '#4A0E8F', size = 7
       </G>
       <Circle cx="50" cy="50" r="48.5" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="2" />
     </Svg>
+  );
+
+  if (!glow) return art;
+
+  const box = Math.round(size * 1.28);
+  return (
+    <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={box} height={box} style={{ position: 'absolute' }} pointerEvents="none">
+        <Defs>
+          {/* circle edge sits at ~78% of the radius; keep it strong there and fade to 0 at the box edge */}
+          <RadialGradient id={`halo-${slug}`} cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={glowColor} stopOpacity="0.9" />
+            <Stop offset="0.74" stopColor={glowColor} stopOpacity="0.65" />
+            <Stop offset="0.88" stopColor={glowColor} stopOpacity="0.25" />
+            <Stop offset="1" stopColor={glowColor} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={box / 2} cy={box / 2} r={box / 2} fill={`url(#halo-${slug})`} />
+      </Svg>
+      {art}
+    </View>
   );
 }
