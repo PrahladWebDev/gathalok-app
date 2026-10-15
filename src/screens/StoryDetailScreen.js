@@ -14,6 +14,7 @@ import { DetailSkeleton } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import ActionSheet from '../components/ActionSheet';
 import IconButton from '../components/IconButton';
+import ListenBar from '../components/ListenBar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -501,6 +502,15 @@ export default function StoryDetailScreen({ route, navigation }) {
           <Card style={{ marginTop: 20 }}>
             <Text style={theme.typography.body}>{story.shortDescription}</Text>
           </Card>
+
+          <ListenBar
+            title={story.title}
+            parts={[
+              story.fullStory,
+              story.origin ? `Historical origin.\n\n${story.origin}` : '',
+              story.significance ? `Cultural significance.\n\n${story.significance}` : '',
+            ]}
+          />
 
           <Text style={[theme.typography.h2, { marginTop: 24, marginBottom: 8 }]}>The Story</Text>
           <ReadingText text={story.fullStory} />

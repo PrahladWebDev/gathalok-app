@@ -8,9 +8,9 @@ import { SkeletonGrid } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import { useTheme } from '../context/ThemeContext';
 import useFocusedFetch from '../hooks/useFocusedFetch';
-import useCountryImages from '../hooks/useCountryImages';
 import api from '../api/client';
 import { COUNTRIES, getCountryColor } from '../data/countries';
+import REALM_IMAGES from '../data/countryImages';
 
 // Tile-grid "map" instead of a literal geographic map — every country is a
 // photo tile (landmark as the background, flag + name + live story count on
@@ -18,7 +18,6 @@ import { COUNTRIES, getCountryColor } from '../data/countries';
 // with no dev build, no Google Maps API key, and no native config.
 export default function MapScreen({ navigation }) {
   const theme = useTheme();
-  const images = useCountryImages();
   const { data: counts, status, refreshing, refresh, reload } = useFocusedFetch(
     () => api.get('/countries/stats').then((r) => {
       const map = {}; // { "India": 12, ... }
@@ -46,7 +45,7 @@ export default function MapScreen({ navigation }) {
           renderItem={({ item }) => {
             const count = counts[item.name] || 0;
             const color = getCountryColor(item.name);
-            const uri = images[item.name];
+            const photo = REALM_IMAGES[item.name];
             return (
               <Pressable
                 onPress={() => navigation.navigate('CountryDetail', { countryName: item.name })}
@@ -62,11 +61,11 @@ export default function MapScreen({ navigation }) {
                   opacity: pressed ? 0.85 : 1,
                 })}
               >
-                {/* colour fallback shows until/unless the photo loads */}
+                {/* colour fallback (used when a country has no photo yet) */}
                 <LinearGradient colors={[color, '#000000']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-                {uri ? (
+                {photo ? (
                   <Image
-                    source={{ uri }}
+                    source={photo}
                     style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
                     contentFit="cover"
                     transition={250}
