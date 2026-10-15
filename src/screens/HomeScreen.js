@@ -115,11 +115,11 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('ExploreTab', { category: item.slug })}
             accessibilityRole="button"
             accessibilityLabel={`Browse ${item.name}`}
-            style={{ width: 92, alignItems: 'center' }}
+            style={{ width: 128, alignItems: 'center' }}
           >
-            <CategoryIllustration slug={item.slug} color={item.color} size={72} glow />
+            <CategoryIllustration slug={item.slug} color={item.color} size={100} glow />
             <Text
-              style={[theme.typography.small, { marginTop: 0, textAlign: 'center', textTransform: 'none', fontSize: 11, color: theme.colors.text }]}
+              style={[theme.typography.small, { marginTop: 0, textAlign: 'center', textTransform: 'none', fontSize: 12, fontWeight: '600', color: theme.colors.text }]}
               numberOfLines={2}
             >
               {item.name}

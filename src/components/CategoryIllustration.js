@@ -1,8 +1,10 @@
 import React from 'react';
 import { View } from 'react-native';
+import { Image } from 'expo-image';
 import Svg, {
   Circle, Ellipse, Rect, Path, Polygon, Polyline, Line, G, Defs, ClipPath, RadialGradient, Stop,
 } from 'react-native-svg';
+import CATEGORY_IMAGES from '../data/categoryImages';
 
 // Illustrated, round category artwork (drawn in code — no image files needed).
 // Usage: <CategoryIllustration slug="ghost-stories" color="#4A0E8F" size={72} />
@@ -217,11 +219,16 @@ const SCENES = {
 // component renders a box ~1.28x the circle size when glow is on.
 export default function CategoryIllustration({ slug, color = '#4A0E8F', size = 72, glow = false }) {
   const Scene = SCENES[slug];
+  const photo = CATEGORY_IMAGES[slug]; // generated photo wins; drawn scene is the fallback
   const light = mix(color, '#ffffff', 0.3);
   const dark = mix(color, '#000000', 0.3);
   const glowColor = mix(color, '#ffffff', 0.25); // lifted so dark categories still glow on a dark bg
 
-  const art = (
+  const art = photo ? (
+    <View style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden', borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)' }}>
+      <Image source={photo} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
+    </View>
+  ) : (
     <Svg width={size} height={size} viewBox="0 0 100 100">
       <Defs>
         <RadialGradient id={`bg-${slug}`} cx="50%" cy="30%" r="80%">
